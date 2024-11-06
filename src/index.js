@@ -1,6 +1,6 @@
 const { app, BrowserWindow, dialog } = require('electron')
-const path = require('node:path')
-const { autoUpdater } = require('electron-updater')
+const path = require('path')
+const { autoUpdater } = require('electron-updater') // Import autoUpdater from electron-updater
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require('electron-squirrel-startup')) {
@@ -8,7 +8,6 @@ if (require('electron-squirrel-startup')) {
 }
 
 const createWindow = () => {
-  // Create the browser window.
   const mainWindow = new BrowserWindow({
     width: 800,
     height: 600,
@@ -17,31 +16,26 @@ const createWindow = () => {
     },
   })
 
-  // Load the main app page
-  mainWindow.loadFile(path.join(__dirname, '../front/index.html'))
-
-  // Open the DevTools for debugging (remove in production)
-  mainWindow.webContents.openDevTools()
+  mainWindow.loadFile(path.join(__dirname, '../front/index.html')) // Make sure this points to your app's HTML file
+  mainWindow.webContents.openDevTools() // Enable DevTools (remove for production)
 }
 
-// Set the update feed URL (GitHub, custom server, etc.)
+// Set up auto-updater for GitHub Releases
 autoUpdater.setFeedURL({
   provider: 'github',
-  owner: 'darshanversatile',
-  repo: 'your-repo-name',
-  private: true, // Use only if repository is private
-  token: 'your-github-personal-access-token', // Use a GitHub token if private
+  owner: 'darshanversatile', // Your GitHub username
+  repo: 'ele', // Your GitHub repository name
+  private: false, // Set this to false for a public repo
 })
 
-// This method will be called when Electron has finished
-// initialization and is ready to create browser windows.
+// Check for updates when the app is ready
 app.whenReady().then(() => {
   createWindow()
 
-  // Check for updates when the app is ready
+  // Check for updates and notify the user
   autoUpdater.checkForUpdatesAndNotify()
 
-  // Notify the user if an update is available
+  // Event listener for when an update is available
   autoUpdater.on('update-available', () => {
     dialog
       .showMessageBox({
@@ -52,13 +46,12 @@ app.whenReady().then(() => {
       })
       .then((result) => {
         if (result.response === 0) {
-          // User chose to update
-          autoUpdater.downloadUpdate()
+          autoUpdater.downloadUpdate() // Start downloading the update
         }
       })
   })
 
-  // Once the update is downloaded, prompt the user to install it
+  // Event listener for when an update is downloaded
   autoUpdater.on('update-downloaded', () => {
     dialog
       .showMessageBox({
@@ -69,17 +62,17 @@ app.whenReady().then(() => {
       })
       .then((result) => {
         if (result.response === 0) {
-          autoUpdater.quitAndInstall() // Restart the app to apply the update
+          autoUpdater.quitAndInstall() // Install the update and quit the app
         }
       })
   })
 
-  // If there's an error during the update process
+  // Handle errors
   autoUpdater.on('error', (error) => {
     console.error('Error during auto-update:', error)
   })
 
-  // On macOS, recreate the window if there are no windows open
+  // Re-create window if it's closed (MacOS)
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
       createWindow()
@@ -87,19 +80,9 @@ app.whenReady().then(() => {
   })
 })
 
-// Quit when all windows are closed (except macOS)
+// Quit when all windows are closed
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit()
   }
-})
-
-// Run Express server for serving static files
-const express = require('express')
-const server = express()
-
-server.use(express.static(path.join(__dirname, 'front')))
-
-server.listen(2000, () => {
-  console.log('App is running on http://localhost:2000')
 })
